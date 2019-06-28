@@ -1,4 +1,4 @@
-import cPickle as pkl
+import pickle as pkl
 from collections import Iterable
 import os
 
@@ -54,7 +54,7 @@ class LineCache(object):
             fhandle = open(self.filename, 'rb')
             fhandle.seek(self.line_seek[line_no])
             line = fhandle.readline()
-            return line
+            return line.decode("utf-8")
 
     def __len__(self):
         return self.num_lines
