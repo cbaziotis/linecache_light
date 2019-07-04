@@ -1,6 +1,6 @@
+import os
 import pickle as pkl
 from collections import Iterable
-import os
 
 
 class LineCache(object):
@@ -17,10 +17,12 @@ class LineCache(object):
         line_100 = linecache[100]
 
     '''
+
     def __init__(self, filename, cache_suffix='.cache'):
         self.filename = filename
         if os.path.exists(self.filename + cache_suffix):
-            self.st_mtime,  self.line_seek = pkl.load(open(self.filename + cache_suffix, 'rb'))
+            self.st_mtime, self.line_seek = pkl.load(
+                open(self.filename + cache_suffix, 'rb'))
             self.num_lines = len(self.line_seek)
             if self.st_mtime != os.stat(self.filename).st_mtime:
                 print('The cache file is out-of-date')
@@ -28,8 +30,11 @@ class LineCache(object):
         else:
             self.build_seek_index(cache_suffix)
 
+        self.fhandle = open(self.filename, 'rb', os.O_RDONLY | os.O_NONBLOCK)
+
     def build_seek_index(self, cache_suffix):
-        print("Caching lines informaiton to %s" % (self.filename + cache_suffix))
+        print(
+            "Caching lines informaiton to %s" % (self.filename + cache_suffix))
         statinfo = os.stat(self.filename)
         self.st_mtime = statinfo.st_mtime
         with open(self.filename, 'rb') as f:
@@ -39,9 +44,9 @@ class LineCache(object):
                 line = f.readline()
                 if not line: break
                 self.line_seek.append(seek_pos)
-            pkl.dump((self.st_mtime, self.line_seek), open(self.filename + cache_suffix, 'wb'))
+            pkl.dump((self.st_mtime, self.line_seek),
+                     open(self.filename + cache_suffix, 'wb'))
             self.num_lines = len(self.line_seek)
-
 
     def __getitem__(self, line_no):
         if isinstance(line_no, slice):
@@ -50,12 +55,12 @@ class LineCache(object):
             return [self[ii] for ii in line_no]
         else:
             if line_no >= self.num_lines:
-                raise IndexError("Out of index: line_no:%s  num_lines: %s" % (line_no, self.num_lines))
-            fhandle = open(self.filename, 'rb')
-            fhandle.seek(self.line_seek[line_no])
-            line = fhandle.readline()
+                raise IndexError("Out of index: line_no:%s  num_lines: %s" % (
+                    line_no, self.num_lines))
+
+            self.fhandle.seek(self.line_seek[line_no])
+            line = self.fhandle.readline()
             return line.decode("utf-8")
 
     def __len__(self):
         return self.num_lines
-
